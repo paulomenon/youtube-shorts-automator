@@ -6,7 +6,10 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+SCOPES = [
+    "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/youtube.force-ssl",
+]
 TOKEN_PATH = "token.json"
 MAX_RETRIES = 3
 BASE_BACKOFF = 60  # seconds
@@ -49,9 +52,13 @@ def upload_short(
     tags: list[str],
     publish_at: Optional[datetime],
     client_secrets_path: str,
+    privacy_status: str = "private",
 ) -> str:
     """
-    Upload a video to YouTube as a scheduled private Short.
+    Upload a video to YouTube.
+
+    Args:
+        privacy_status: "private", "public", or "unlisted" (default: "private").
 
     Returns the YouTube video ID on success.
     Raises on unrecoverable failure.
@@ -66,7 +73,7 @@ def upload_short(
             "categoryId": "22",  # People & Blogs
         },
         "status": {
-            "privacyStatus": "private",
+            "privacyStatus": privacy_status,
             "selfDeclaredMadeForKids": False,
         },
     }
@@ -90,6 +97,42 @@ def upload_short(
     video_id = response["id"]
     logger.info("Upload complete — YouTube ID: %s", video_id)
     return video_id
+
+
+def upload_caption_track(
+    video_id: str,
+    srt_path: str,
+    language: str,
+    client_secrets_path: str,
+    name: str = "",
+) -> str:
+    """Upload an SRT file as a caption track on an existing YouTube video."""
+    from googleapiclient.http import MediaFileUpload
+
+    youtube = _get_authenticated_service(client_secrets_path)
+
+    body = {
+        "snippet": {
+            "videoId": video_id,
+            "language": language,
+            "name": name or f"Captions ({language})",
+            "isDraft": False,
+        },
+    }
+
+    media = MediaFileUpload(srt_path, mimetype="application/x-subrip", resumable=True)
+
+    request = youtube.captions().insert(
+        part="snippet",
+        body=body,
+        media_body=media,
+    )
+
+    logger.info("Uploading caption track for video %s from %s", video_id, srt_path)
+    response = _execute_with_retry(request)
+    caption_id = response["id"]
+    logger.info("Caption track uploaded — ID: %s", caption_id)
+    return caption_id
 
 
 def _execute_with_retry(request, max_retries: int = MAX_RETRIES) -> dict:

@@ -53,12 +53,13 @@ Edit `config.yaml` with your API keys and preferences.
 
 The app is designed to work out of the box with zero configuration. If you run `python -m src.main start` without any flags or config file, these defaults apply:
 
-| Setting                      | Default Value           | What it means                                              |
-|------------------------------|-------------------------|------------------------------------------------------------|
-| Watch directory              | `./videos/input`        | Drop your long videos here                                 |
-| Output directory             | `./videos/output`       | Generated shorts are saved here                            |
-| Max short duration           | **60 seconds**          | Each clip is capped at 60s (override with `--duration`)    |
-| Shorts per video             | **5**                   | Each long video produces 5 shorts                          |
+| Setting                      | Default Value                | What it means                                              |
+|------------------------------|------------------------------|------------------------------------------------------------|
+| Watch directory              | `./videos/input`             | Shorts are generated from videos here                      |
+| Output directory             | `./videos/output`            | Generated shorts are saved here                            |
+| Ready for upload directory   | `./videos/ready_for_upload`  | Drop full videos here for upload + shorts pipeline         |
+| Max short duration           | **60 seconds**               | Each clip is capped at 60s (override with `--duration`)    |
+| Shorts per video             | **5**                        | Each long video produces 5 shorts                          |
 | Posting schedule             | **Daily at 10:00 AM**   | One short uploaded per day at 10:00 UTC                    |
 | Mode                         | **auto**                | Automatically moves to the next video when done            |
 | Processing mode              | **eager**               | All clips are processed upfront when a video is detected   |
@@ -294,6 +295,79 @@ python scripts\windows_scheduler.py remove
 ```
 
 The task appears in Windows Task Scheduler as `YouTubeShortsAutomator`.
+
+## Full Video Upload
+
+You can upload your full-length video to YouTube and automatically start generating shorts from it -- all in one step. Just move (or copy) your video file into the `videos/ready_for_upload/` folder and run the uploader script. It takes care of everything:
+
+1. **Move your video** into `videos/ready_for_upload/`
+2. **Run the uploader** -- it transcribes the video, generates a title/description/hashtags, uploads it to YouTube, and adds captions as a toggleable subtitle track
+3. **Shorts start automatically** -- after a successful upload, the video is moved to `videos/input/` where the shorts watchdog picks it up and begins splitting it into shorts
+
+### Run the full video uploader
+
+**Watch mode** (stays running, processes new videos as they appear):
+
+```bash
+python -m src.full_video_upload
+```
+
+**Immediate mode** (process everything in the folder now and exit):
+
+```bash
+python -m src.full_video_upload --now
+```
+
+### Upload as public or private
+
+By default, the full video is uploaded as **private**. This means it won't be visible to anyone until you manually publish it from YouTube Studio.
+
+To upload as **public** right away (visible to everyone immediately):
+
+```bash
+python -m src.full_video_upload --public
+```
+
+You can combine it with `--now`:
+
+```bash
+python -m src.full_video_upload --now --public
+```
+
+| Flag        | Visibility | What happens                                          |
+|-------------|------------|-------------------------------------------------------|
+| *(default)* | Private    | Video is hidden; publish manually from YouTube Studio |
+| `--public`  | Public     | Video goes live immediately after upload              |
+
+### Run both pipelines together
+
+To get the complete end-to-end workflow (full video upload + shorts generation), run both in separate terminals:
+
+```bash
+# Terminal 1: Shorts pipeline (watcher + scheduler)
+python -m src.main start
+
+# Terminal 2: Full video uploader (watcher)
+python -m src.full_video_upload
+```
+
+Or use `--now` on both for a one-shot run:
+
+```bash
+python -m src.full_video_upload --now && python -m src.main start --now
+```
+
+### Folder flow
+
+```
+videos/ready_for_upload/    →  full video uploaded to YouTube
+        ↓ (moved on success)
+videos/input/               →  shorts watchdog picks it up
+        ↓ (processed)
+videos/output/              →  generated shorts saved here
+```
+
+You only need to touch the first folder. Everything else happens automatically.
 
 ## How It Works
 
