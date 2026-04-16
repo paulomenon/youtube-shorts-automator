@@ -4,6 +4,7 @@
 # Directories
 watch_dir: "./videos/input"
 output_dir: "./videos/output"
+ready_for_upload_dir: "./videos/ready_for_upload"
 
 # How many shorts to generate per long video
 number_of_shorts_per_video: 5

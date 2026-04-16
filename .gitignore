@@ -16,5 +16,7 @@ token.json
 data/*.db
 videos/input/*
 videos/output/*
+videos/ready_for_upload/*
 !videos/input/.gitkeep
 !videos/output/.gitkeep
+!videos/ready_for_upload/.gitkeep

@@ -26,6 +26,7 @@ class Schedule:
 class AppConfig:
     watch_dir: str = "./videos/input"
     output_dir: str = "./videos/output"
+    ready_for_upload_dir: str = "./videos/ready_for_upload"
     number_of_shorts_per_video: int = 5
     mode: str = "auto"
     schedule: Schedule = field(default_factory=Schedule)
@@ -38,11 +39,13 @@ class AppConfig:
     def __post_init__(self):
         self.watch_dir = str(Path(self.watch_dir).resolve())
         self.output_dir = str(Path(self.output_dir).resolve())
+        self.ready_for_upload_dir = str(Path(self.ready_for_upload_dir).resolve())
         self.database_path = str(Path(self.database_path).resolve())
         self.youtube_client_secrets = str(Path(self.youtube_client_secrets).resolve())
 
         os.makedirs(self.watch_dir, exist_ok=True)
         os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.ready_for_upload_dir, exist_ok=True)
         os.makedirs(os.path.dirname(self.database_path), exist_ok=True)
 
         if self.mode not in ("auto", "manual"):
@@ -89,6 +92,7 @@ def load_config(path: str = "config.yaml") -> AppConfig:
     return AppConfig(
         watch_dir=raw.get("watch_dir", "./videos/input"),
         output_dir=raw.get("output_dir", "./videos/output"),
+        ready_for_upload_dir=raw.get("ready_for_upload_dir", "./videos/ready_for_upload"),
         number_of_shorts_per_video=raw.get("number_of_shorts_per_video", 5),
         mode=raw.get("mode", "auto"),
         schedule=_parse_schedule(raw.get("schedule")),
