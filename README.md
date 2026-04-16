@@ -162,7 +162,7 @@ This generates 30 Shorts from a single video and schedules them one per day for 
 1. **Watch** - Monitors `videos/input/` for new video files
 2. **Split** - Divides long videos into <= 60-second clips
 3. **Caption** - Transcribes audio with Whisper and burns subtitles into the video
-4. **Metadata** - Generates titles, descriptions, and hashtags via an LLM
+4. **Metadata** - Automatically generates titles, descriptions, and hashtags via an LLM using the transcript (no manual input needed; falls back to transcript-based defaults if no API key is set)
 5. **Schedule** - Queues shorts for upload according to your posting schedule
 6. **Upload** - Publishes to YouTube as private videos with scheduled publish times
 
