@@ -21,8 +21,21 @@ def _setup_logging():
 def cmd_start(args):
     """Launch the folder watcher and posting scheduler."""
     from src.pipeline import Pipeline
+    from src.video_processor import MAX_SHORT_DURATION
 
     config = load_config(args.config)
+
+    if args.duration:
+        import src.video_processor as vp
+        vp.MAX_SHORT_DURATION = float(args.duration)
+        logger.info("Max short duration overridden to %ss", args.duration)
+
+    if args.now:
+        logger.info("Running in immediate mode — processing and uploading all pending work now")
+        pipeline = Pipeline(config)
+        pipeline.run_now()
+        return
+
     pipeline = Pipeline(config)
 
     def shutdown(signum, frame):
@@ -116,7 +129,15 @@ def main():
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    subparsers.add_parser("start", help="Launch folder watcher and scheduler")
+    start_parser = subparsers.add_parser("start", help="Launch folder watcher and scheduler")
+    start_parser.add_argument(
+        "--now", action="store_true",
+        help="Process all pending videos and upload immediately (skip scheduler)",
+    )
+    start_parser.add_argument(
+        "--duration", type=int, default=None,
+        help="Override max short duration in seconds (default: 60)",
+    )
 
     subparsers.add_parser("status", help="Show all jobs and their progress")
 
