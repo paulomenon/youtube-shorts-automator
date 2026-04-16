@@ -77,6 +77,86 @@ python -m src.main retry <short_id>
 python -m src.main reset <job_id>
 ```
 
+## Scheduling
+
+All scheduling is controlled through the `schedule` section in `config.yaml`.
+
+### Option 1: Post every day
+
+Upload one Short per day at a fixed time.
+
+```yaml
+schedule:
+  frequency: "daily"
+  time: "10:00"
+```
+
+### Option 2: Post on specific weekdays
+
+Upload only on the days you choose.
+
+```yaml
+schedule:
+  frequency: "weekdays"
+  time: "14:30"
+  days:
+    - "Monday"
+    - "Wednesday"
+    - "Friday"
+```
+
+Valid day names: `Monday`, `Tuesday`, `Wednesday`, `Thursday`, `Friday`, `Saturday`, `Sunday`.
+
+### Option 3: Custom cron expression
+
+For full control, use a standard 5-field cron expression as the `frequency` value. The `time` field is ignored when using a cron expression since the time is embedded in the expression itself.
+
+```yaml
+schedule:
+  # Every Tuesday and Thursday at 9:15 AM
+  frequency: "15 9 * * TUE,THU"
+  time: "09:15"  # ignored when frequency is a cron expression
+```
+
+Cron format: `minute hour day-of-month month day-of-week`
+
+| Field         | Values              | Example      |
+|---------------|---------------------|--------------|
+| Minute        | 0-59                | `30`         |
+| Hour          | 0-23                | `14`         |
+| Day of month  | 1-31 or `*`         | `*`          |
+| Month         | 1-12 or `*`         | `*`          |
+| Day of week   | MON-SUN or 0-6      | `MON,WED`    |
+
+### Common cron examples
+
+```yaml
+# Twice a day at 9 AM and 6 PM
+frequency: "0 9,18 * * *"
+
+# Every 2 hours during business hours on weekdays
+frequency: "0 9-17/2 * * MON-FRI"
+
+# Once a week on Sunday at noon
+frequency: "0 12 * * SUN"
+
+# Every day at 8 PM
+frequency: "0 20 * * *"
+```
+
+### Content Machine scheduling
+
+When you set `number_of_shorts_per_video` to a high number, the scheduler automatically spreads the uploads across future dates based on your schedule. For example:
+
+```yaml
+number_of_shorts_per_video: 30
+schedule:
+  frequency: "daily"
+  time: "10:00"
+```
+
+This generates 30 Shorts from a single video and schedules them one per day for the next 30 days. Each Short is uploaded to YouTube as a **private** video with a `publishAt` time, so they go public automatically on schedule.
+
 ## How It Works
 
 1. **Watch** - Monitors `videos/input/` for new video files
