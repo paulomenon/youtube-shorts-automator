@@ -1,0 +1,7 @@
+watchdog
+openai-whisper
+apscheduler
+google-api-python-client
+google-auth-oauthlib
+openai
+pyyaml

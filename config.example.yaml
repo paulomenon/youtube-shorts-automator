@@ -1,0 +1,45 @@
+# YouTube Shorts Automator - Configuration
+# Copy this file to config.yaml and edit to match your setup.
+
+# Directories
+watch_dir: "./videos/input"
+output_dir: "./videos/output"
+
+# How many shorts to generate per long video
+number_of_shorts_per_video: 5
+
+# "auto" = move to next video when limit reached
+# "manual" = stop and wait for user action
+mode: "auto"
+
+# Posting schedule
+schedule:
+  # "daily", "weekdays", or a cron expression like "0 10 * * MON,WED,FRI"
+  frequency: "daily"
+  # Time of day to post (24h format)
+  time: "10:00"
+  # Only used when frequency is "weekdays"
+  days:
+    - "Monday"
+    - "Wednesday"
+    - "Friday"
+
+# Caption styling for burned-in subtitles
+caption_style:
+  font: "Arial"
+  font_size: 24
+  font_color: "white"
+  outline_color: "black"
+  outline_width: 2
+
+# Processing mode: "eager" processes all clips upfront, "lazy" processes just-in-time
+processing_mode: "eager"
+
+# OpenAI API key for metadata generation (title, description, hashtags)
+openai_api_key: ""
+
+# Path to YouTube OAuth2 client secrets JSON
+youtube_client_secrets: "./client_secrets.json"
+
+# SQLite database path
+database_path: "./data/shorts_automator.db"
