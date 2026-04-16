@@ -61,6 +61,26 @@ class Pipeline:
         self.posting_scheduler.stop()
         logger.info("Pipeline stopped")
 
+    def run_now(self) -> None:
+        """Process all pending videos and upload all ready shorts immediately."""
+        db.init_db(self.config.database_path)
+
+        self._resume_interrupted_jobs()
+        self.watcher.scan_existing(self._on_new_video)
+
+        pending_jobs = db.get_jobs_by_status("pending")
+        for job in pending_jobs:
+            self._on_new_video(job["filepath"])
+
+        shorts = db.get_shorts_by_upload_status("scheduled") + db.get_shorts_by_upload_status("pending")
+        uploaded = 0
+        for short in shorts:
+            if short["output_path"] and short["title"]:
+                self._upload_single_short(short)
+                uploaded += 1
+
+        logger.info("Immediate run complete — uploaded %d short(s)", uploaded)
+
     # ------------------------------------------------------------------
     # Event handlers
     # ------------------------------------------------------------------

@@ -59,6 +59,37 @@ python -m src.main start
 
 This launches the folder watcher and scheduler. Drop video files into `videos/input/` and the system handles the rest.
 
+### Run immediately (skip the scheduler)
+
+If you don't want to wait for the next scheduled time and want to process and upload everything right now, use the `--now` flag:
+
+```bash
+python -m src.main start --now
+```
+
+This processes all pending videos in `videos/input/`, generates the shorts, and uploads them to YouTube immediately in a single run. The app exits when done instead of staying running.
+
+### Change short duration
+
+By default, each Short is capped at 60 seconds. You can override this at runtime with the `--duration` flag:
+
+```bash
+# Make 30-second shorts
+python -m src.main start --duration 30
+
+# Make 45-second shorts and run immediately
+python -m src.main start --now --duration 45
+```
+
+### Combine flags
+
+Flags can be combined freely:
+
+```bash
+# Process now with 30-second clips using a custom config
+python -m src.main --config my_config.yaml start --now --duration 30
+```
+
 ### Check status
 
 ```bash
@@ -157,12 +188,86 @@ schedule:
 
 This generates 30 Shorts from a single video and schedules them one per day for the next 30 days. Each Short is uploaded to YouTube as a **private** video with a `publishAt` time, so they go public automatically on schedule.
 
+## System-Level Scheduling (cron / Windows Task Scheduler)
+
+Instead of keeping the app running all the time, you can use your operating system's scheduler to run the automator on a cron job (macOS/Linux) or a Windows Scheduled Task. Both scripts use the `--now` flag under the hood, so each run processes and uploads immediately, then exits.
+
+### macOS / Linux (cron)
+
+Use the included `scripts/manage_schedule.py` to create, update, or remove a system crontab entry.
+
+**Set a schedule:**
+
+```bash
+# Run every day at 10:00 AM
+python scripts/manage_schedule.py set "0 10 * * *"
+
+# Run Monday, Wednesday, Friday at 2:30 PM
+python scripts/manage_schedule.py set "30 14 * * MON,WED,FRI"
+
+# Run every 6 hours
+python scripts/manage_schedule.py set "0 */6 * * *"
+
+# Run twice a day at 9 AM and 6 PM
+python scripts/manage_schedule.py set "0 9,18 * * *"
+```
+
+**Show the current schedule:**
+
+```bash
+python scripts/manage_schedule.py show
+```
+
+**Remove the schedule:**
+
+```bash
+python scripts/manage_schedule.py remove
+```
+
+The cron job logs output to `data/cron.log` inside the project directory.
+
+### Windows (Task Scheduler)
+
+Use the included `scripts/windows_scheduler.py` to create, update, or remove a Windows Scheduled Task.
+
+**Set a daily schedule:**
+
+```powershell
+python scripts\windows_scheduler.py set --time 10:00
+```
+
+**Set a weekly schedule on specific days:**
+
+```powershell
+python scripts\windows_scheduler.py set --time 10:00 --frequency weekly --days MON,WED,FRI
+```
+
+**Set an hourly schedule (every 2 hours):**
+
+```powershell
+python scripts\windows_scheduler.py set --time 08:00 --frequency hourly --interval 2
+```
+
+**Show the current task:**
+
+```powershell
+python scripts\windows_scheduler.py show
+```
+
+**Remove the task:**
+
+```powershell
+python scripts\windows_scheduler.py remove
+```
+
+The task appears in Windows Task Scheduler as `YouTubeShortsAutomator`.
+
 ## How It Works
 
 1. **Watch** - Monitors `videos/input/` for new video files
 2. **Split** - Divides long videos into <= 60-second clips
 3. **Caption** - Transcribes audio with Whisper and burns subtitles into the video
-4. **Metadata** - Generates titles, descriptions, and hashtags via an LLM
+4. **Metadata** - Automatically generates titles, descriptions, and hashtags via an LLM using the transcript (no manual input needed; falls back to transcript-based defaults if no API key is set)
 5. **Schedule** - Queues shorts for upload according to your posting schedule
 6. **Upload** - Publishes to YouTube as private videos with scheduled publish times
 
