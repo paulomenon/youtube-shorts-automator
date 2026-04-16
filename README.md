@@ -49,6 +49,39 @@ Edit `config.yaml` with your API keys and preferences.
 4. Download the client secrets JSON and save it as `client_secrets.json` in the project root
 5. The first upload will open a browser window for OAuth consent
 
+## Defaults
+
+The app is designed to work out of the box with zero configuration. If you run `python -m src.main start` without any flags or config file, these defaults apply:
+
+| Setting                      | Default Value           | What it means                                              |
+|------------------------------|-------------------------|------------------------------------------------------------|
+| Watch directory              | `./videos/input`        | Drop your long videos here                                 |
+| Output directory             | `./videos/output`       | Generated shorts are saved here                            |
+| Max short duration           | **60 seconds**          | Each clip is capped at 60s (override with `--duration`)    |
+| Shorts per video             | **5**                   | Each long video produces 5 shorts                          |
+| Posting schedule             | **Daily at 10:00 AM**   | One short uploaded per day at 10:00 UTC                    |
+| Mode                         | **auto**                | Automatically moves to the next video when done            |
+| Processing mode              | **eager**               | All clips are processed upfront when a video is detected   |
+| Database                     | `./data/shorts_automator.db` | SQLite state stored locally                           |
+
+You only need a `config.yaml` if you want to change any of these. The watchdog folder monitor starts immediately and keeps running -- any video dropped into the watch directory is picked up, split into shorts, captioned, and queued for upload on the default daily schedule.
+
+To override defaults without editing a config file, use CLI flags:
+
+```bash
+# Use all defaults (watch folder, 60s clips, daily at 10:00)
+python -m src.main start
+
+# Same defaults but with 30-second shorts instead of 60
+python -m src.main start --duration 30
+
+# Skip the schedule entirely and process + upload everything right now
+python -m src.main start --now
+
+# Combine: 45-second shorts, upload immediately
+python -m src.main start --now --duration 45
+```
+
 ## Usage
 
 ### Start the automator
